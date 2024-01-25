@@ -71,7 +71,7 @@ def get_monthly_cigarette_total(user_id):
             # user_idをテーブル名とする
             table_name = user_id
             # 月の合計金額を取得するSQLクエリ
-            query = sql.SQL("SELECT SUM(amount) FROM {} WHERE (date BETWEEN %s AND %s) AND purpose = '%タバコ'").format(
+            query = sql.SQL("SELECT SUM(amount) FROM {} WHERE (date BETWEEN %s AND %s) AND purpose LIKE '%タバコ%'").format(
                 sql.Identifier(table_name)
             )
             cur.execute(query, [start_of_month, end_of_month])
