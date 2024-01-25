@@ -127,7 +127,6 @@ def handle_message(event):
     elif ',' in text:
         try:
             text.replace(' ', '')
-            text.replace('　', '')
             date, location, purpose, amount = text.split(',')
             if date == '今日':
                 date = dt_now.strftime('%Y/%m/%d')
@@ -139,7 +138,6 @@ def handle_message(event):
     elif '、' in text:
         try:
             text.replace(' ', '')
-            text.replace('　', '')
             date, location, purpose, amount = text.split('、')
             if date == '今日':
                 date = dt_now.strftime('%Y/%m/%d')
