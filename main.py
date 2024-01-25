@@ -126,7 +126,7 @@ def handle_message(event):
         insert_data(profile.user_id, value)
         reply_message = "家計簿に情報を追加しました。"
     else:
-        reply_message = "入力は'日付, 場所, 用途, 金額'か'確認'、もしくは'タバコ'を入力してください"
+        reply_message = "入力は'日付, 場所, 用途, 金額'か'合計'、もしくは'タバコ合計'を入力してください"
 
     line_bot_api.reply_message(
         event.reply_token,
