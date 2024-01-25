@@ -1,0 +1,28 @@
+<?php require('index.php'); ?>
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=yes">
+    <title></title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined">
+    <link rel="stylesheet" href="./common/css/base.css">
+</head>
+<body>
+<header>
+    <?php require('./common/php/header.php'); ?>
+</header>
+<main id="scheduleMain">
+    <div class="week_select">
+        <button class="toweekButton" type="button" onclick="location.href='./index.html'">今週</button>
+        <?php echo $pre_week_tag, $next_week_tag; ?>
+    </div>
+    <table class="calender">
+        <?php echo $table; ?>
+    </table>
+
+    <a href="./manage/index.html">あ，こっちでーす</a>
+    <a href="./gig_booking/index.html">こっち２(ツー)</a>
+</main>
+</body>
+</html>

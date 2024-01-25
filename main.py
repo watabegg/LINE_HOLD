@@ -77,19 +77,6 @@ def get_monthly_cigarette_total(user_id):
             cur.execute(query, [start_of_month, end_of_month])
             total_cigarette_amount = cur.fetchone()[0]
             return total_cigarette_amount
-        
-def text_split(text):
-    text.replace(' ', '')
-    text.replace('　', '')
-    if ',' in text:
-        try:
-            date, location, purpose, amount = text.split('、')
-        except ValueError as e:
-            return date, location, purpose, amount, "入力エラー:"
-    elif '、' in text:
-        a = 1
-    else:
-        return "入力エラー:入力は「日付, 場所, 用途, 金額」か「合計」、もしくは「タバコ合計」を入力してください"
 
 @app.route("/")
 def hello_world():
