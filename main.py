@@ -4,23 +4,79 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, FollowEvent, UnfollowEvent
 import psycopg2
+from pyscoqg2 import sql
+import datetime
 
 
-LINE_CHANNEL_ACCESS_TOKEN = "~~~~~あなたのチャネルアクセストークン~~~~~"
-LINE_CHANNEL_SECRET = "~~~~~あなたのチャネルシークレット~~~~~"
-DATABASE_URL = "~~~~~あなたのデータベースURL~~~~~" # 後ほどHerokuでPostgreSQLデータベースURLを取得
-HEROKU_APP_NAME = "~~~~~あなたのHerokuアプリ名~~~~~" # 後ほど作成するHerokuアプリ名
-
-app = Flask(__name__)
-Heroku = "https://{}.herokuapp.com/".format(HEROKU_APP_NAME)
-
+# LINE botの設定
+LINE_CHANNEL_ACCESS_TOKEN = os.environ['LINE_CHANNEL_ACCESS_TOKEN']
+LINE_CHANNEL_SECRET = os.environ['LINE_CHANNEL_SECRET']
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
+
+DATABASE_URL = os.environ['DATABASE_URL'] # PostgreSQLデータベースURLを取得
+RENDER_APP_NAME = "LINE-Hold" 
+
+dt_now = datetime.datetime.now()
+
+app = Flask(__name__)
+RENDER = "https://{}.onrender.com/".format(RENDER_APP_NAME)
 
 header = {
     "Content_Type": "application/json",
     "Authorization": "Bearer " + LINE_CHANNEL_ACCESS_TOKEN
 }
+
+# データベース接続
+def get_connection():
+    return psycopg2.connect(DATABASE_URL, sslmode="require")
+
+# データをデータベースに挿入
+def insert_data(table_name, value):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            query = sql.SQL("INSERT INTO {} (date, location, purpose, amount) VALUES (%s, %s, %s, %s)").format(
+                sql.Identifier(table_name)
+                )
+            cur.execute(query, value)
+
+            conn.commit()
+
+# ユーザごとの月の合計金額取得関数
+def get_monthly_total(user_id):
+    today = datetime.date.today()
+    start_of_month = today.replace(day=1)
+    end_of_month = today.replace(day=1, month=today.month+1) - datetime.timedelta(days=1)
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            # user_idをテーブル名とする
+            table_name = user_id
+            # 月の合計金額を取得するSQLクエリ
+            query = sql.SQL("SELECT SUM(amount) FROM {} WHERE date BETWEEN %s AND %s").format(
+                sql.Identifier(table_name)
+            )
+            cur.execute(query, [start_of_month, end_of_month])
+            total_amount = cur.fetchone()[0]
+            return total_amount
+
+# ユーザごとの月のタバコ合計金額取得関数
+def get_monthly_cigarette_total(user_id):
+    today = datetime.date.today()
+    start_of_month = today.replace(day=1)
+    end_of_month = today.replace(day=1, month=today.month+1) - datetime.timedelta(days=1)
+
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            # user_idをテーブル名とする
+            table_name = user_id
+            # 月の合計金額を取得するSQLクエリ
+            query = sql.SQL("SELECT SUM(amount) FROM {} WHERE (date BETWEEN %s AND %s) AND (purpose = 'タバコ' OR purpose = 'たばこ')").format(
+                sql.Identifier(table_name)
+            )
+            cur.execute(query, [start_of_month, end_of_month])
+            total_cigarette_amount = cur.fetchone()[0]
+            return total_cigarette_amount
 
 @app.route("/")
 def hello_world():
@@ -46,15 +102,29 @@ def callback():
 # botにメッセージを送ったときの処理
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
+    text = event.message.text.lower()
+    profile = line_bot_api.get_profile(event.source.user_id)
+
+    if text == '合計':
+        total_amount = get_monthly_total(profile.user_id)
+        reply_message = f"今月の合計金額は{total_amount}円です。"
+    elif text == 'タバコ合計':
+        cigarette_amount = get_monthly_cigarette_total(profile.user_id)
+        reply_message = f"今月のタバコの合計金額は{cigarette_amount}円です。"
+    elif ',' in text:
+        date, location, purpose, amount = text.split(',')
+        if date == '今日':
+            date = dt_now.strftime('%Y/%m/%d')
+        value = [date, location, purpose, amount]
+        insert_data(profile.user_id, value)
+        reply_message = "家計簿に情報を追加しました。"
+    else:
+        reply_message = "入力は'日付, 場所, 用途, 金額'か'確認'、もしくは'タバコ'を入力してください"
+
     line_bot_api.reply_message(
         event.reply_token,
-        TextSendMessage(text=event.message.text))
-    print("返信完了!!\ntext:", event.message.text)
-
-
-# データベース接続
-def get_connection():
-    return psycopg2.connect(DATABASE_URL, sslmode="require")
+        TextSendMessage(text=reply_message)
+    )
 
 
 # botがフォローされたときの処理
@@ -64,33 +134,28 @@ def handle_follow(event):
     with get_connection() as conn:
         with conn.cursor() as cur:
             conn.autocommit = True
-            cur.execute('CREATE TABLE IF NOT EXISTS users(user_id TEXT)')
-            cur.execute('INSERT INTO users (user_id) VALUES (%s)', [profile.user_id])
-            print('userIdの挿入OK!!')
-            cur.execute('SELECT * FROM users')
-            db = cur.fetchall()
-    print("< データベース一覧 >")
-    for db_check in db:
-        print(db_check)
+            # user_idをテーブル名とする
+            table_name = profile.user_id
+            # テーブルが存在しない場合のみ作成
+            cur.execute(sql.SQL("CREATE TABLE IF NOT EXISTS {} (date DATE, location VARCHAR, purpose VARCHAR, amount INT)").format(
+                sql.Identifier(table_name)
+            ))
+            conn.commit()
 
 
 # botがアンフォロー(ブロック)されたときの処理
 @handler.add(UnfollowEvent)
 def handle_unfollow(event):
+    profile = line_bot_api.get_profile(event.source.user_id)
     with get_connection() as conn:
         with conn.cursor() as cur:
             conn.autocommit = True
-            cur.execute('DELETE FROM users WHERE user_id = %s', [event.source.user_id])
+            cur.execute('DROP TABLE IF EXISTS %s', profile.user_id)
     print("userIdの削除OK!!")
 
 
 # アプリの起動
 if __name__ == "__main__":
-    # 初回のみデータベースのテーブル作成
-    with get_connection() as conn:
-        with conn.cursor() as cur:
-            conn.autocommit = True
-            cur.execute('CREATE TABLE IF NOT EXISTS users(user_id TEXT)')
 
     port = int(os.getenv("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
