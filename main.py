@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, abort
+from flask import Flask, request, abort
 import requests, os
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
@@ -77,10 +77,11 @@ def get_monthly_cigarette_total(user_id):
             cur.execute(query, [start_of_month, end_of_month])
             total_cigarette_amount = cur.fetchone()[0]
             return total_cigarette_amount
+        
 
 @app.route("/")
 def hello_world():
-    return render_template("index.html")
+    return "hello world!"
 
 
 # アプリにPOSTがあったときの処理
