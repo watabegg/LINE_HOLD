@@ -71,12 +71,25 @@ def get_monthly_cigarette_total(user_id):
             # user_idをテーブル名とする
             table_name = user_id
             # 月の合計金額を取得するSQLクエリ
-            query = sql.SQL("SELECT SUM(amount) FROM {} WHERE (date BETWEEN %s AND %s) AND purpose LIKE '%タバコ%'").format(
+            query = sql.SQL("SELECT SUM(amount) FROM {} WHERE (date BETWEEN %s AND %s) AND purpose = 'タバコ'").format(
                 sql.Identifier(table_name)
             )
             cur.execute(query, [start_of_month, end_of_month])
             total_cigarette_amount = cur.fetchone()[0]
             return total_cigarette_amount
+        
+def text_split(text):
+    text.replace(' ', '')
+    text.replace('　', '')
+    if ',' in text:
+        try:
+            date, location, purpose, amount = text.split('、')
+        except ValueError as e:
+            return date, location, purpose, amount, "入力エラー:"
+    elif '、' in text:
+        a = 1
+    else:
+        return "入力エラー:入力は「日付, 場所, 用途, 金額」か「合計」、もしくは「タバコ合計」を入力してください"
 
 @app.route("/")
 def hello_world():
@@ -112,21 +125,31 @@ def handle_message(event):
         cigarette_amount = get_monthly_cigarette_total(profile.user_id)
         reply_message = f"今月のタバコの合計金額は{cigarette_amount}円です。"
     elif ',' in text:
-        date, location, purpose, amount = text.split(',')
-        if date == '今日':
-            date = dt_now.strftime('%Y/%m/%d')
-        value = [date, location, purpose, amount]
-        insert_data(profile.user_id, value)
-        reply_message = "家計簿に情報を追加しました。"
+        try:
+            text.replace(' ', '')
+            text.replace('　', '')
+            date, location, purpose, amount = text.split(',')
+            if date == '今日':
+                date = dt_now.strftime('%Y/%m/%d')
+            value = [date, location, purpose, amount]
+            insert_data(profile.user_id, value)
+            reply_message = "家計簿に情報を追加しました。"
+        except ValueError as e:
+            reply_message = "入力エラー:入力が足りません。入力は「日付, 場所, 用途, 金額」のすべてを含んでください。"
     elif '、' in text:
-        date, location, purpose, amount = text.split('、')
-        if date == '今日':
-            date = dt_now.strftime('%Y/%m/%d')
-        value = [date, location, purpose, amount]
-        insert_data(profile.user_id, value)
-        reply_message = "家計簿に情報を追加しました。"
+        try:
+            text.replace(' ', '')
+            text.replace('　', '')
+            date, location, purpose, amount = text.split('、')
+            if date == '今日':
+                date = dt_now.strftime('%Y/%m/%d')
+            value = [date, location, purpose, amount]
+            insert_data(profile.user_id, value)
+            reply_message = "家計簿に情報を追加しました。"
+        except ValueError as e:
+            reply_message = "入力エラー:入力が足りません。入力は「日付, 場所, 用途, 金額」のすべてを含んでください。"
     else:
-        reply_message = "入力は'日付, 場所, 用途, 金額'か'合計'、もしくは'タバコ合計'を入力してください"
+        reply_message = "入力エラー:入力は「日付, 場所, 用途, 金額」か「合計」、もしくは「タバコ合計」を入力してください"
 
     line_bot_api.reply_message(
         event.reply_token,
