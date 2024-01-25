@@ -15,7 +15,7 @@ line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 DATABASE_URL = os.environ['DATABASE_URL'] # PostgreSQLデータベースURLを取得
-RENDER_APP_NAME = "LINE-Hold" 
+RENDER_APP_NAME = "line-hold" 
 
 dt_now = datetime.datetime.now()
 
@@ -113,6 +113,13 @@ def handle_message(event):
         reply_message = f"今月のタバコの合計金額は{cigarette_amount}円です。"
     elif ',' in text:
         date, location, purpose, amount = text.split(',')
+        if date == '今日':
+            date = dt_now.strftime('%Y/%m/%d')
+        value = [date, location, purpose, amount]
+        insert_data(profile.user_id, value)
+        reply_message = "家計簿に情報を追加しました。"
+    elif '、' in text:
+        date, location, purpose, amount = text.split('、')
         if date == '今日':
             date = dt_now.strftime('%Y/%m/%d')
         value = [date, location, purpose, amount]
