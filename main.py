@@ -134,7 +134,7 @@ def handle_message(event):
         reply_message = f"今月の合計金額は{total_amount}円です。"
     elif text == 'タバコ合計':
         if profile.user_id == watabegg_id:
-            cigarette_amount = worksheet.acell('G6').value
+            cigarette_amount = worksheet.acell('G11').value
         else:
             cigarette_amount = get_monthly_cigarette_total(profile.user_id)
         reply_message = f"今月のタバコの合計金額は{cigarette_amount}円です。"
