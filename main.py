@@ -3,6 +3,9 @@ import requests, os
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage, FollowEvent, UnfollowEvent
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+import gspread
 import psycopg2
 from psycopg2 import sql
 import datetime
@@ -17,6 +20,14 @@ handler = WebhookHandler(LINE_CHANNEL_SECRET)
 DATABASE_URL = os.environ['DATABASE_URL'] # PostgreSQLデータベースURLを取得
 RENDER_APP_NAME = "line-hold" 
 
+# Google Sheets APIの設定
+SPREADSHEET_ID = os.environ['SPREADSHEET_ID']
+spread_title = 'Sheet1'
+SERVICE_ACCOUNT_FILE  = '/etc/secrets/credentials.json'
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
+gc = gspread.service_account(SERVICE_ACCOUNT_FILE)
+worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(spread_title)
+
 dt_now = datetime.datetime.now()
 
 app = Flask(__name__)
@@ -26,6 +37,12 @@ header = {
     "Content_Type": "application/json",
     "Authorization": "Bearer " + LINE_CHANNEL_ACCESS_TOKEN
 }
+
+# スプレッドシートに書き込む関数
+def append_data_to_spreadsheet(date, location, purpose, amount): 
+    new_data = [date, location, purpose, amount]
+    last_row = len(worksheet.col_values(1))
+    worksheet.append_row(new_data, value_input_option='USER_ENTERED', insert_data_option='INSERT_ROWS', table_range=f'A{last_row+1}:D{last_row+1}')
 
 # データベース接続
 def get_connection():
@@ -107,10 +124,16 @@ def handle_message(event):
     profile = line_bot_api.get_profile(event.source.user_id)
 
     if text == '合計':
-        total_amount = get_monthly_total(profile.user_id)
+        if profile.id == watabegg_id:
+            total_amount = worksheet.acell('G3').value
+        else:
+            total_amount = get_monthly_total(profile.user_id)
         reply_message = f"今月の合計金額は{total_amount}円です。"
     elif text == 'タバコ合計':
-        cigarette_amount = get_monthly_cigarette_total(profile.user_id)
+        if profile.id == watabegg_id:
+            cigarette_amount = worksheet.acell('G6').value
+        else:
+            cigarette_amount = get_monthly_cigarette_total(profile.user_id)
         reply_message = f"今月のタバコの合計金額は{cigarette_amount}円です。"
     elif ',' in text:
         try:
@@ -118,8 +141,11 @@ def handle_message(event):
             date, location, purpose, amount = text.split(',')
             if date == '今日':
                 date = dt_now.strftime('%Y/%m/%d')
-            value = [date, location, purpose, amount]
-            insert_data(profile.user_id, value)
+            if profile.id == watabegg_id:
+                append_data_to_spreadsheet(date, location, purpose, amount)
+            else:
+                value = [date, location, purpose, amount]
+                insert_data(profile.user_id, value)
             reply_message = "家計簿に情報を追加しました。"
         except ValueError as e:
             reply_message = "入力エラー:入力が足りません。入力は「日付, 場所, 用途, 金額」のすべてを含んでください。"
@@ -129,11 +155,17 @@ def handle_message(event):
             date, location, purpose, amount = text.split('、')
             if date == '今日':
                 date = dt_now.strftime('%Y/%m/%d')
-            value = [date, location, purpose, amount]
-            insert_data(profile.user_id, value)
+            if profile.id == watabegg_id:
+                append_data_to_spreadsheet(date, location, purpose, amount)
+            else:
+                value = [date, location, purpose, amount]
+                insert_data(profile.user_id, value)
             reply_message = "家計簿に情報を追加しました。"
         except ValueError as e:
             reply_message = "入力エラー:入力が足りません。入力は「日付, 場所, 用途, 金額」のすべてを含んでください。"
+    elif text == 'watabegg専用':
+        watabegg_id = profile.user_id
+        reply_message = "データ入力がPostgreSQLからGoogle SpreadSheetに変更されました。"
     else:
         reply_message = "入力エラー:入力は「日付, 場所, 用途, 金額」か「合計」、もしくは「タバコ合計」を入力してください"
 
