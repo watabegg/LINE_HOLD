@@ -30,7 +30,7 @@ worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(spread_title)
 
 dt_now = datetime.datetime.now()
 
-watabegg_id = 0
+global watabegg_id
 
 app = Flask(__name__)
 RENDER = "https://{}.onrender.com/".format(RENDER_APP_NAME)
