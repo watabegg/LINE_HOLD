@@ -124,13 +124,13 @@ def handle_message(event):
     profile = line_bot_api.get_profile(event.source.user_id)
 
     if text == '合計':
-        if profile.id == watabegg_id:
+        if profile.user_id == watabegg_id:
             total_amount = worksheet.acell('G3').value
         else:
             total_amount = get_monthly_total(profile.user_id)
         reply_message = f"今月の合計金額は{total_amount}円です。"
     elif text == 'タバコ合計':
-        if profile.id == watabegg_id:
+        if profile.user_id == watabegg_id:
             cigarette_amount = worksheet.acell('G6').value
         else:
             cigarette_amount = get_monthly_cigarette_total(profile.user_id)
@@ -141,7 +141,7 @@ def handle_message(event):
             date, location, purpose, amount = text.split(',')
             if date == '今日':
                 date = dt_now.strftime('%Y/%m/%d')
-            if profile.id == watabegg_id:
+            if profile.user_id == watabegg_id:
                 append_data_to_spreadsheet(date, location, purpose, amount)
             else:
                 value = [date, location, purpose, amount]
@@ -155,7 +155,7 @@ def handle_message(event):
             date, location, purpose, amount = text.split('、')
             if date == '今日':
                 date = dt_now.strftime('%Y/%m/%d')
-            if profile.id == watabegg_id:
+            if profile.user_id == watabegg_id:
                 append_data_to_spreadsheet(date, location, purpose, amount)
             else:
                 value = [date, location, purpose, amount]
