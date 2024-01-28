@@ -167,7 +167,7 @@ def handle_message(event):
             reply_message = "入力エラー:入力が足りません。入力は「日付, 場所, 用途, 金額」のすべてを含んでください。"
     elif text == 'watabegg専用':
         watabegg_id = profile.user_id
-        reply_message = "データ入力がPostgreSQLからGoogle SpreadSheetに変更されました。"
+        reply_message = f"データ入力がPostgreSQLからGoogle SpreadSheetに変更されました。\n{watabegg_id}"
     else:
         reply_message = "入力エラー:入力は「日付, 場所, 用途, 金額」か「合計」、もしくは「タバコ合計」を入力してください"
 
