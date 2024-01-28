@@ -30,7 +30,7 @@ worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(spread_title)
 
 dt_now = datetime.datetime.now()
 
-global watabegg_id
+watabegg_id = 'Ub204e3d30a9ada4c261667699436afb6'
 
 app = Flask(__name__)
 RENDER = "https://{}.onrender.com/".format(RENDER_APP_NAME)
@@ -124,6 +124,7 @@ def callback():
 def handle_message(event):
     text = event.message.text.lower()
     profile = line_bot_api.get_profile(event.source.user_id)
+    watabegg_id = 'Ub204e3d30a9ada4c261667699436afb6'
 
     if text == '合計':
         if profile.user_id == watabegg_id:
@@ -165,9 +166,6 @@ def handle_message(event):
             reply_message = "家計簿に情報を追加しました。"
         except ValueError as e:
             reply_message = "入力エラー:入力が足りません。入力は「日付, 場所, 用途, 金額」のすべてを含んでください。"
-    elif text == 'watabegg専用':
-        watabegg_id = profile.user_id
-        reply_message = f"データ入力がPostgreSQLからGoogle SpreadSheetに変更されました。\n{watabegg_id}"
     else:
         reply_message = "入力エラー:入力は「日付, 場所, 用途, 金額」か「合計」、もしくは「タバコ合計」を入力してください"
 
