@@ -29,7 +29,7 @@ gc = gspread.service_account(SERVICE_ACCOUNT_FILE)
 worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(spread_title)
 
 # JST = timezone(timedelta(hours=+9), 'JST')
-dt_now = datetime.datetime.now()
+dt_now = datetime.now()
 
 watabegg_id = 'Ub204e3d30a9ada4c261667699436afb6'
 
