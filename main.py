@@ -8,7 +8,7 @@ from googleapiclient.discovery import build
 import gspread
 import psycopg2
 from psycopg2 import sql
-import datetime
+from datetime import datetime, timedelta, timezone
 
 
 # LINE botの設定
@@ -28,6 +28,7 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 gc = gspread.service_account(SERVICE_ACCOUNT_FILE)
 worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(spread_title)
 
+# JST = timezone(timedelta(hours=+9), 'JST')
 dt_now = datetime.datetime.now()
 
 watabegg_id = 'Ub204e3d30a9ada4c261667699436afb6'
@@ -124,7 +125,8 @@ def callback():
 def handle_message(event):
     text = event.message.text.lower()
     profile = line_bot_api.get_profile(event.source.user_id)
-    watabegg_id = 'Ub204e3d30a9ada4c261667699436afb6'
+    # watabegg_id = 'Ub204e3d30a9ada4c261667699436afb6'
+    watabegg_id = '1'
 
     if text == '合計':
         if profile.user_id == watabegg_id:
