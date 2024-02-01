@@ -62,7 +62,7 @@ def insert_data(table_name, value):
 
 # ユーザごとの月の合計金額取得関数
 def get_monthly_total(user_id):
-    today = datetime.today()
+    today = dt_now.date()
     start_of_month = today.replace(day=1)
     end_of_month = today.replace(day=1, month=today.month+1) - timedelta(days=1)
 
@@ -80,7 +80,7 @@ def get_monthly_total(user_id):
 
 # ユーザごとの月のタバコ合計金額取得関数
 def get_monthly_cigarette_total(user_id):
-    today = datetime.today()
+    today = dt_now.date()
     start_of_month = today.replace(day=1)
     end_of_month = today.replace(day=1, month=today.month+1) - timedelta(days=1)
 
