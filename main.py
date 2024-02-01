@@ -123,8 +123,7 @@ def callback():
 def handle_message(event):
     text = event.message.text.lower()
     profile = line_bot_api.get_profile(event.source.user_id)
-    # watabegg_id = 'Ub204e3d30a9ada4c261667699436afb6'
-    watabegg_id = '1'
+    watabegg_id = 'Ub204e3d30a9ada4c261667699436afb6'
 
     if text == '合計':
         if profile.user_id == watabegg_id:
