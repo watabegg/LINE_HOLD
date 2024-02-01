@@ -8,7 +8,7 @@ from googleapiclient.discovery import build
 import gspread
 import psycopg2
 from psycopg2 import sql
-import datetime
+from datetime import datetime, timedelta, timezone
 
 
 # LINE botの設定
@@ -28,10 +28,8 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets']
 gc = gspread.service_account(SERVICE_ACCOUNT_FILE)
 worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(spread_title)
 
-# JST = timezone(timedelta(hours=+9), 'JST')
-dt_now = datetime.datetime.now()
-
-watabegg_id = 'Ub204e3d30a9ada4c261667699436afb6'
+JST = timezone(timedelta(hours=+9), 'JST')
+dt_now = datetime.now(JST)
 
 app = Flask(__name__)
 RENDER = "https://{}.onrender.com/".format(RENDER_APP_NAME)
@@ -64,9 +62,9 @@ def insert_data(table_name, value):
 
 # ユーザごとの月の合計金額取得関数
 def get_monthly_total(user_id):
-    today = datetime.date.today()
+    today = datetime.today()
     start_of_month = today.replace(day=1)
-    end_of_month = today.replace(day=1, month=today.month+1) - datetime.timedelta(days=1)
+    end_of_month = today.replace(day=1, month=today.month+1) - timedelta(days=1)
 
     with get_connection() as conn:
         with conn.cursor() as cur:
@@ -82,9 +80,9 @@ def get_monthly_total(user_id):
 
 # ユーザごとの月のタバコ合計金額取得関数
 def get_monthly_cigarette_total(user_id):
-    today = datetime.date.today()
+    today = datetime.today()
     start_of_month = today.replace(day=1)
-    end_of_month = today.replace(day=1, month=today.month+1) - datetime.timedelta(days=1)
+    end_of_month = today.replace(day=1, month=today.month+1) - timedelta(days=1)
 
     with get_connection() as conn:
         with conn.cursor() as cur:
