@@ -29,7 +29,6 @@ gc = gspread.service_account(SERVICE_ACCOUNT_FILE)
 worksheet = gc.open_by_key(SPREADSHEET_ID).worksheet(spread_title)
 
 JST = timezone(timedelta(hours=+9), 'JST')
-dt_now = datetime.now(JST)
 
 app = Flask(__name__)
 RENDER = "https://{}.onrender.com/".format(RENDER_APP_NAME)
@@ -62,6 +61,7 @@ def insert_data(table_name, value):
 
 # ユーザごとの月の合計金額取得関数
 def get_monthly_total(user_id):
+    dt_now = datetime.now(JST)
     today = dt_now.date()
     start_of_month = today.replace(day=1)
     end_of_month = today.replace(day=1, month=today.month+1) - timedelta(days=1)
@@ -80,6 +80,7 @@ def get_monthly_total(user_id):
 
 # ユーザごとの月のタバコ合計金額取得関数
 def get_monthly_cigarette_total(user_id):
+    dt_now = datetime.now(JST)
     today = dt_now.date()
     start_of_month = today.replace(day=1)
     end_of_month = today.replace(day=1, month=today.month+1) - timedelta(days=1)
